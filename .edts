@@ -1,0 +1,4 @@
+:name "emusakedts"
+:node-sname "emusakedts"
+:lib-dirs '("lib" "deps" "test" "apps")
+:app-include-dirs '("priv" "include")

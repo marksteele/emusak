@@ -1,0 +1,14 @@
+{application, emusak, [
+    {description, ""},
+    {vsn, "0.1.0"},
+    {modules, []},
+    {registered, []},
+    {applications, [
+        kernel,
+        stdlib,
+        cowboy,
+        jiffy
+    ]},
+    {mod, {emusak_app, []}},
+    {env, []}
+]}.
