@@ -61,9 +61,22 @@ getlist(N) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+  {Author,Type,Name,Path}
+  PL = ets:new(
+         playlist,
+         [
+          bag,
+          private,
+          named_table,
+          {keypos,3},
+          {read_concurrency,false},
+          {write_concurrency,false},
+          compressed
+         ]
+        ),
   Playlist = filelib:fold_files(
                "/share/Music",
-               "(mp3|ogg|flac)\$",
+               "(mp3|flac)\$",
                true,
                fun(F,Acc) ->
                    FileParts = filename:split(F),
@@ -72,11 +85,11 @@ init([]) ->
                    Artist = lists:nth(4,FileParts),
                    FileType0 = string:substr(filename:extension(F),2),
                    {FileType1,URLPath} = case FileType0 of
-                     flac ->
-                       {<<"opus">>,re:replace(F,"^/share/Music","/transcode",[{return,list}])};
-                     _ ->
-                       {list_to_binary(FileType),re:replace(F,"^/share/Music","",[{return,list}])}
-                   end,
+                                           "flac" ->
+                                             {<<"oga">>,"/transcode/" ++ Artist ++ "/" ++ SongTitle ++ ".ogg"};
+                                           _ ->
+                                             {list_to_binary(FileType0),re:replace(F,"^/share/Music","",[{return,list}])}
+                                         end,
                    Acc ++ [#{FileType1 => list_to_binary(URLPath),
                             <<"title">> => list_to_binary(SongTitle),
                             <<"artist">> => list_to_binary(Artist)}]

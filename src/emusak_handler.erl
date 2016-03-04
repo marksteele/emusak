@@ -12,7 +12,8 @@ init(_, Req, _Opts) ->
   {ok, Req, #state{}}.
 
 handle(Req, State=#state{}) ->
-  {ok, Json} = emusak_playlist:getlist(10),
+
+  {ok, Json} = emusak_playlist:getlist(1000),
   {ok, Req2} = cowboy_req:reply(
                  200,
                  [{<<"content-type">>, <<"application/json">>}],
