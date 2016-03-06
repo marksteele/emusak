@@ -9,11 +9,13 @@
 -module(emusak_playlist).
 
 -behaviour(gen_server).
-
+-include("emusak.hrl").
 %% API
 -export([
          start_link/0,
-         getlist/1
+         random_playlist/1,
+         get_entry/1,
+         list_artists/0
         ]).
 
 %% gen_server callbacks
@@ -26,7 +28,7 @@
 
 -define(SERVER, ?MODULE).
 
--record(state, {playlist=[],current=1,length}).
+-record(state,{count,artists}).
 
 %%%===================================================================
 %%% API
@@ -42,8 +44,14 @@
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-getlist(N) ->
-  gen_server:call(?SERVER,{getlist,N}).
+random_playlist(N) ->
+  gen_server:call(?SERVER,{random_playlist,N}).
+
+get_entry(Id) ->
+  gen_server:call(?SERVER,{get_entry,Id}).
+
+list_artists() ->
+  gen_server:call(?SERVER,list_artists).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -61,42 +69,35 @@ getlist(N) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
-  {Author,Type,Name,Path}
-  PL = ets:new(
-         playlist,
-         [
-          bag,
-          private,
-          named_table,
-          {keypos,3},
-          {read_concurrency,false},
-          {write_concurrency,false},
-          compressed
-         ]
-        ),
-  Playlist = filelib:fold_files(
-               "/share/Music",
-               "(mp3|flac)\$",
-               true,
-               fun(F,Acc) ->
-                   FileParts = filename:split(F),
-                   FileName = filename:basename(lists:last(FileParts)),
-                   SongTitle = filename:rootname(FileName),
-                   Artist = lists:nth(4,FileParts),
-                   FileType0 = string:substr(filename:extension(F),2),
-                   {FileType1,URLPath} = case FileType0 of
-                                           "flac" ->
-                                             {<<"oga">>,"/transcode/" ++ Artist ++ "/" ++ SongTitle ++ ".ogg"};
-                                           _ ->
-                                             {list_to_binary(FileType0),re:replace(F,"^/share/Music","",[{return,list}])}
-                                         end,
-                   Acc ++ [#{FileType1 => list_to_binary(URLPath),
-                            <<"title">> => list_to_binary(SongTitle),
-                            <<"artist">> => list_to_binary(Artist)}]
-               end,
-               []),
-  Shuffled = [X||{_,X} <- lists:sort([ {random:uniform(), N} || N <- Playlist])],
-  {ok, #state{playlist=Shuffled,length=length(Playlist)}}.
+  ets:new(
+    playlist,
+    [
+     set,
+     private,
+     named_table,
+     {keypos,#song.id},
+     {read_concurrency,false},
+     {write_concurrency,false},
+     compressed
+    ]
+   ),
+  {Songs,Artists} = filelib:fold_files(
+            "/share/Music",
+            "(mp3|flac)\$",
+            true,
+            fun(F,{CountAcc,ArtistsAcc}) ->
+                FileParts = filename:split(F),
+                FileName = filename:basename(lists:last(FileParts)),
+                SongTitle = filename:rootname(FileName),
+                Artist = lists:nth(4,FileParts),
+                FileType = string:substr(filename:extension(F),2),
+                ets:insert(playlist,#song{id=CountAcc,artist=list_to_binary(Artist),type=FileType,name=list_to_binary(SongTitle),file=F}),
+                {CountAcc + 1,sets:add_element(Artist,ArtistsAcc)}
+            end,
+            {1,sets:new()}
+            ),
+  random:seed(erlang:timestamp()),
+  {ok, #state{count=Songs,artists=sets:to_list(Artists)}}.
 
 %%--------------------------------------------------------------------
 %% @private
@@ -113,15 +114,27 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_call({getlist,N}, _, State=#state{playlist=Playlist,current=Current,length=L}) ->
-  List = lists:sublist(Playlist,Current,N),
-  NewPosition = case (Current + N) > L of
-                  true ->
-                    1;
-                  false ->
-                    Current + N
-                end,
-  {reply, {ok,jiffy:encode(List)}, State#state{current=NewPosition}};
+handle_call({random_playlist,N}, _, State=#state{count=C}) ->
+  Playlist = [
+              begin
+                [Item] = ets:lookup(playlist,random:uniform(C)),
+                #{<<"oga">> => list_to_binary(
+                                 "/transcode/" ++
+                                   Item#song.type ++
+                                   "/" ++ integer_to_list(Item#song.id)),
+                  <<"title">> => Item#song.name,
+                  <<"artist">> => Item#song.artist}
+              end
+              || _ <- lists:seq(1,N)],
+  {reply, {ok,jiffy:encode(Playlist)}, State};
+
+handle_call({get_entry,Id}, _, State) ->
+  [Item] = ets:lookup(playlist,Id),
+  {reply, Item , State};
+
+handle_call(list_artists,_,State=#state{artists=A}) ->
+  {reply, {ok, jiffy:encode(A)},State};
+
 
 handle_call(_Request, _From, State) ->
   Reply = ok,
