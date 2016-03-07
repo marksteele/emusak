@@ -10,12 +10,15 @@
 
 -behaviour(gen_server).
 -include("emusak.hrl").
+-include_lib("stdlib/include/ms_transform.hrl").
+
 %% API
 -export([
          start_link/0,
          random_playlist/1,
          get_entry/1,
-         list_artists/0
+         list_artists/0,
+         songs_by_artist/1
         ]).
 
 %% gen_server callbacks
@@ -52,6 +55,9 @@ get_entry(Id) ->
 
 list_artists() ->
   gen_server:call(?SERVER,list_artists).
+
+songs_by_artist(Artist) ->
+  gen_server:call(?SERVER,{songs_by_artist,Artist}).
 
 %%%===================================================================
 %%% gen_server callbacks
@@ -135,6 +141,21 @@ handle_call({get_entry,Id}, _, State) ->
 handle_call(list_artists,_,State=#state{artists=A}) ->
   {reply, {ok, jiffy:encode(A)},State};
 
+handle_call({songs_by_artist,Artist},_,State) ->
+  Playlist = [
+              begin
+                 #{<<"oga">> => list_to_binary(
+                                  "/transcode/" ++
+                                     Item#song.type ++
+                                     "/" ++ integer_to_list(Item#song.id)),
+                    <<"title">> => Item#song.name,
+                   <<"artist">> => Item#song.artist}
+              end || Item <- ets:match_object(
+                               playlist,
+                               {song,'$1',Artist,'$2','$3','_'}
+                              )
+             ],
+  {reply,{ok,jiffy:encode(Playlist)},State};
 
 handle_call(_Request, _From, State) ->
   Reply = ok,

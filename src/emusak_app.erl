@@ -7,12 +7,9 @@
 start(_Type, _Args) ->
   Dispatch = cowboy_router:compile([
                                     {'_', [
-                                           {"/random_song",emusak_handler,[]},
+                                           {"/playlist",emusak_handler,[]},
                                            {"/transcode/[:type]/[:id]",emusak_transcode,[]},
-                                           {"/", cowboy_static, {priv_file, emusak, "index.html"}},
-                                           {"/js/[...]",cowboy_static, {priv_dir,emusak,"js/"}},
-                                           {"/swf/[...]",cowboy_static, {priv_dir,emusak,"swf/"}},
-                                           {"/[...]",cowboy_static, {dir,"/share/Music"}}
+                                           {"/[...]",cowboy_static, {dir,"/var/www/emusak"}}
                                           ]
                                     }
                                    ]),
