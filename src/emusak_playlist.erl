@@ -15,7 +15,7 @@
 %% API
 -export([
          start_link/0,
-         random_playlist/1,
+         playlist/0,
          get_entry/1,
          list_artists/0,
          songs_by_artist/1
@@ -47,8 +47,8 @@
 start_link() ->
   gen_server:start_link({local, ?SERVER}, ?MODULE, [], []).
 
-random_playlist(N) ->
-  gen_server:call(?SERVER,{random_playlist,N}).
+playlist() ->
+  gen_server:call(?SERVER,playlist).
 
 get_entry(Id) ->
   gen_server:call(?SERVER,{get_entry,Id}).
@@ -120,18 +120,17 @@ init([]) ->
 %% @end
 %%--------------------------------------------------------------------
 
-handle_call({random_playlist,N}, _, State=#state{count=C}) ->
+handle_call(playlist, _, State) ->
   Playlist = [
               begin
-                [Item] = ets:lookup(playlist,random:uniform(C)),
-                #{<<"oga">> => list_to_binary(
-                                 "/transcode/" ++
-                                   Item#song.type ++
-                                   "/" ++ integer_to_list(Item#song.id)),
+                #{<<"url">> => list_to_binary(
+                                  "http://192.168.101.8/transcode/" ++
+                                    Item#song.type ++
+                                    "/" ++ integer_to_list(Item#song.id)),
                   <<"title">> => Item#song.name,
                   <<"artist">> => Item#song.artist}
               end
-              || _ <- lists:seq(1,N)],
+              || Item <- ets:tab2list(playlist)],
   {reply, {ok,jiffy:encode(Playlist)}, State};
 
 handle_call({get_entry,Id}, _, State) ->
@@ -144,7 +143,7 @@ handle_call(list_artists,_,State=#state{artists=A}) ->
 handle_call({songs_by_artist,Artist},_,State) ->
   Playlist = [
               begin
-                 #{<<"oga">> => list_to_binary(
+                 #{<<"url">> => list_to_binary(
                                   "/transcode/" ++
                                      Item#song.type ++
                                      "/" ++ integer_to_list(Item#song.id)),

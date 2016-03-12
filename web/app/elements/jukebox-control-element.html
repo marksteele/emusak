@@ -1,0 +1,56 @@
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/iron-icons/av-icons.html">
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="jukebox-control-element">
+  <template>
+    <style>
+    </style>
+    <paper-card heading="[[song.artist]]" style="width: 100%; ">
+      <div class="card-content">[[song.title]]</div>
+      <div class="card-actions">
+        <paper-button on-click="handlePrev">
+          <iron-icon icon="av:skip-previous"></iron-icon>
+        </paper-button>
+        <paper-button on-click="handlePlay">
+          <iron-icon icon="av:play-arrow"></iron-icon>
+        </paper-button>
+        <paper-button on-click="handlePause">
+          <iron-icon icon="av:pause"></iron-icon>
+        </paper-button>
+        <paper-button on-click="handleStop">
+          <iron-icon icon="av:stop"></iron-icon>
+        </paper-button>
+        <paper-button on-click="handleNext">
+          <iron-icon icon="av:skip-next"></iron-icon>
+        </paper-button>
+      </div>
+    </paper-card>
+  </template>
+  <script>
+    (function(win, doc, undefined){
+    Polymer({
+    is: 'jukebox-control-element',
+    properties: {
+      song: Object
+    },
+    handlePlay: function(e,d) {
+      this.fire('play');
+    },
+    handleStop: function(e,d) {
+      this.fire('stop');
+    },
+    handlePause: function(e,d) {
+      this.fire('pause');
+    },
+    handlePrev: function(e,d) {
+      this.fire('prev');
+    },
+    handleNext: function(e,d) {
+      this.fire('next');
+    }
+    });
+    })(window, document);
+  </script>
+</dom-module>

@@ -12,10 +12,12 @@ init(_, Req, _Opts) ->
   {ok, Req, #state{}}.
 
 handle(Req, State=#state{}) ->
-  {ok, Json} = emusak_playlist:random_playlist(5),
+  {ok, Json} = emusak_playlist:playlist(),
   {ok, Req2} = cowboy_req:reply(
                  200,
-                 [{<<"content-type">>, <<"application/json">>}],
+                 [
+                  {<<"content-type">>, <<"application/json">>}
+                 ],
                  Json,
                  Req),
   {ok, Req2, State}.

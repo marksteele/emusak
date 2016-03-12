@@ -1,0 +1,146 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/iron-ajax/iron-ajax.html">
+<link rel="import" href="../bower_components/iron-input/iron-input.html">
+<link rel="import" href="../bower_components/iron-label/iron-label.html">
+<link rel="import" href="../bower_components/iron-list/iron-list.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/poly-filter/poly-filter.html">
+<link rel="import" href="../bower_components/paper-material/paper-material.html">
+
+<!-- jukebox elements -->
+<link rel="import" href="jukebox-control-element.html">
+<link rel="import" href="jukebox-track-element.html">
+
+<dom-module id="jukebox-element">
+  <template>
+    <style>
+
+      .item {
+        @apply(--layout-horizontal);
+        cursor: pointer;
+        padding: 16px 22px;
+        border-bottom: 1px solid #DDD;
+      }
+    .item:focus,
+      .item.selected:focus {
+        outline: 0;
+        background-color: #ddd;
+      }
+ .item.selected {
+        background-color: var(--google-grey-300);
+        border-bottom: 1px solid #ccc;
+      }
+      iron-list {
+       height: 200px;
+      }
+    </style>
+    <div>
+      <audio src="" id="player"></audio>
+      <iron-ajax
+         id="ajax"
+         url="/playlist"
+         last-response="{{playlist}}"
+         handle-as="json"
+         on-response="initTrack"
+         auto>
+      </iron-ajax>
+      <poly-filter
+         array-to-filter="[[playlist]]"
+         filter="[[filterString]]"
+         filtered-array="{{filteredPlaylist}}">
+      </poly-filter>
+      <jukebox-control-element id="control">
+
+      </jukebox-control-element>
+      <paper-material elevation="1">
+        <div class="item">
+          <iron-label>Search <input is="iron-input" type="string" value="{{filterString::input}}" autofocus></iron-label>
+        </div>
+        <iron-list
+           items="[[filteredPlaylist]]"
+           as="song"
+           id="playlist"
+           selection-enabled>
+          <template>
+            <div
+               tabindex$="[[tabIndex]]"
+               id="{{index}}"
+               artist="[[song.artist]]"
+               title="[[song.title]]"
+               url="[[song.url]]"
+               class$="[[_computedClass(selected)]]"
+               on-tap="_itemSelected">[[song.artist]] - [[song.title]]</div>
+          </template>
+        </iron-list>
+      </paper-material>
+    </div>
+  </template>
+  <script>
+    (function(win, doc, undefined){
+      Polymer({
+        is: 'jukebox-element',
+        properties: {
+          last: Object,
+          currentTrack: Object,
+          paused: Boolean,
+          playing: Boolean
+        },
+        ready: function() {
+          var that = this,
+          control = this.$.control,
+          player = this.$.player,
+          playlist = this.$.playlist;
+          control.addEventListener('play',function (e) {
+            if (this.currentTrack === undefined) {
+              if (playlist.items != null) {
+                this.currentTrack = playlist.items[0];
+                player.src = this.currentTrack.url;
+                player.load();
+                player.play();
+                this.playing = true;
+              } else {
+                alert('No tracks available');
+              }
+            } else {
+              player.src = this.currentTrack.url;
+              player.load();
+              player.play();
+              this.playing = true;
+            }
+          });
+          control.addEventListener('pause',function (e) {
+            if (this.currentTrack === undefined || this.playing == false) {
+              alert('Not playing!');
+            } else {
+              if (this.paused == true) {
+                player.play();
+                this.paused = false;
+              } else {
+                player.pause();
+                this.paused = true;
+              }
+            }
+          });
+        },
+        initTrack: function() {
+          console.log('data loaded');
+        },
+        _itemSelected: function(e) {
+          var song = e.model.song
+          this.$.control.song = song;
+          this.$.player.src = song.url;
+          this.$.player.load();
+          this.$.player.play();
+        },
+     _computedClass: function(isSelected) {
+          var classes = 'item';
+          if (isSelected) {
+            classes += ' selected';
+          }
+          return classes;
+        },
+
+      })
+    })(window, document);
+  </script>
+</dom-module>

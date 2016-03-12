@@ -9,7 +9,8 @@ start(_Type, _Args) ->
                                     {'_', [
                                            {"/playlist",emusak_handler,[]},
                                            {"/transcode/[:type]/[:id]",emusak_transcode,[]},
-                                           {"/[...]",cowboy_static, {dir,"/var/www/emusak"}}
+                                           {"/",cowboy_static,{file,"/home/mark/emusak/web/app/index.html"}},
+                                           {"/[...]",cowboy_static, {dir,"/home/mark/emusak/web/app"}}
                                           ]
                                     }
                                    ]),
