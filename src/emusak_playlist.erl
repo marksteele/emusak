@@ -75,6 +75,7 @@ songs_by_artist(Artist) ->
 %% @end
 %%--------------------------------------------------------------------
 init([]) ->
+  {ok, Dir} = application:get_env(emusak,music_dir),
   ets:new(
     playlist,
     [
@@ -88,7 +89,7 @@ init([]) ->
     ]
    ),
   {Songs,Artists} = filelib:fold_files(
-            "/share/Music",
+            Dir,
             "(mp3|flac)\$",
             true,
             fun(F,{CountAcc,ArtistsAcc}) ->
