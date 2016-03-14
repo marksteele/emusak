@@ -12,3 +12,8 @@ rel/example_project
 .erlang.mk/
 _rel/
 rel/
+web/app/node_modules
+web/dist
+web/app/bower_components
+web/.tmp
+web/.publish/

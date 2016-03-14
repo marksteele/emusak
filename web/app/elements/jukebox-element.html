@@ -3,7 +3,6 @@
 <link rel="import" href="../bower_components/iron-input/iron-input.html">
 <link rel="import" href="../bower_components/iron-label/iron-label.html">
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
-<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/poly-filter/poly-filter.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
 
@@ -64,7 +63,8 @@
           <template>
             <div
                tabindex$="[[tabIndex]]"
-               id="{{index}}"
+               index$="[[index]]"
+               selected$="[[selected]]"
                artist="[[song.artist]]"
                title="[[song.title]]"
                url="[[song.url]]"
@@ -81,7 +81,7 @@
         is: 'jukebox-element',
         properties: {
           last: Object,
-          currentTrack: Object,
+          currentTrack: Number,
           paused: Boolean,
           playing: Boolean
         },
@@ -90,19 +90,44 @@
           control = this.$.control,
           player = this.$.player,
           playlist = this.$.playlist;
+          player.addEventListener('ended',function(e){
+            if (this.currentTrack === undefined) {
+              if (playlist.items != null) {
+                nextTrack = 0;
+              } else {
+                alert('empty playlist');
+              }
+            } else {
+              if (this.currentTrack == (playlist.items.length -1)) {
+                nextTrack = 0;
+              } else {
+                nextTrack = this.currentTrack + 1;
+              }
+            }
+            this.currentTrack = nextTrack;
+            player.src = playlist.items[nextTrack].url;
+            control.song = playlist.items[nextTrack];
+            playlist.selectItem(nextTrack);
+            playlist.scrollToIndex(nextTrack);
+            player.load();
+            player.play();
+          });
           control.addEventListener('play',function (e) {
             if (this.currentTrack === undefined) {
               if (playlist.items != null) {
-                this.currentTrack = playlist.items[0];
-                player.src = this.currentTrack.url;
+                this.currentTrack = 0;
+                song = playlist.items[0];
+                player.src = song.url;
                 player.load();
                 player.play();
                 this.playing = true;
+                playlist.selectItem(0);
+                control.song = song;
               } else {
                 alert('No tracks available');
               }
             } else {
-              player.src = this.currentTrack.url;
+              player.src = playlist.items[this.currentTrack].url;
               player.load();
               player.play();
               this.playing = true;
@@ -121,16 +146,75 @@
               }
             }
           });
+          control.addEventListener('stop',function (e) {
+            if (this.currentTrack === undefined || this.playing == false) {
+              alert('Not playing!');
+            } else {
+              this.playing = false;
+              player.pause();
+              player.currentTime = 0;
+            }
+          });
+          control.addEventListener('next',function (e) {
+            if (this.currentTrack === undefined) {
+              if (playlist.items != null) {
+                nextTrack = 0;
+              } else {
+                alert('empty playlist');
+              }
+            } else {
+              if (this.currentTrack == (playlist.items.length -1)) {
+                nextTrack = 0;
+              } else {
+                nextTrack = this.currentTrack + 1;
+              }
+            }
+            this.currentTrack = nextTrack;
+            player.src = playlist.items[nextTrack].url;
+            control.song = playlist.items[nextTrack];
+            playlist.selectItem(nextTrack);
+            playlist.scrollToIndex(nextTrack);
+            if (this.playing == true) {
+              player.load();
+              player.play();
+            }
+          });
+          control.addEventListener('prev',function (e) {
+            if (this.currentTrack === undefined) {
+              if (playlist.items != null) {
+                nextTrack = 0;
+              } else {
+                alert('empty playlist');
+              }
+            } else {
+              if (this.currentTrack == 0) {
+                nextTrack = playlist.items.length - 1;
+              } else {
+                nextTrack = this.currentTrack - 1;
+              }
+            }
+            this.currentTrack = nextTrack;
+            player.src = playlist.items[nextTrack].url;
+            control.song = playlist.items[nextTrack];
+            playlist.selectItem(nextTrack);
+            playlist.scrollToIndex(nextTrack);
+            if (this.playing == true) {
+              player.load();
+              player.play();
+            }
+          });
         },
         initTrack: function() {
           console.log('data loaded');
         },
         _itemSelected: function(e) {
+          this.playing = true;
           var song = e.model.song
-          this.$.control.song = song;
-          this.$.player.src = song.url;
-          this.$.player.load();
-          this.$.player.play();
+          control.song = song;
+          this.currentTrack = e.model.index + 1;
+          player.src = song.url;
+          player.load();
+          player.play();
         },
      _computedClass: function(isSelected) {
           var classes = 'item';
