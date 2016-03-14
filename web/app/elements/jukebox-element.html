@@ -88,19 +88,24 @@
           var that = this,
           control = this.$.control,
           player = this.$.player,
-          playlist = this.$.playlist;
+          playlist = this.$.playlist,
+          currentTrack = this.currentTrack;
           player.addEventListener('ended',function(e){
             if (this.currentTrack === undefined) {
+              console.log('Current track undefined');
               if (playlist.items != null) {
                 nextTrack = 0;
               } else {
                 alert('empty playlist');
               }
             } else {
+              console.log('Current track defined');
               if (this.currentTrack == (playlist.items.length -1)) {
+                console.log('looping');
                 nextTrack = 0;
               } else {
                 nextTrack = this.currentTrack + 1;
+                console.log('not looping, next track: ' + nextTrack);
               }
             }
             this.currentTrack = nextTrack;
@@ -156,16 +161,20 @@
           });
           control.addEventListener('next',function (e) {
             if (this.currentTrack === undefined) {
+              console.log('Current track undefined');
               if (playlist.items != null) {
                 nextTrack = 0;
               } else {
                 alert('empty playlist');
               }
             } else {
+              console.log('Current track defined');
               if (this.currentTrack == (playlist.items.length -1)) {
+                console.log('Looping');
                 nextTrack = 0;
               } else {
                 nextTrack = this.currentTrack + 1;
+                console.log('Next track: ' + nextTrack);
               }
             }
             this.currentTrack = nextTrack;
@@ -207,10 +216,11 @@
           console.log('data loaded');
         },
         _itemSelected: function(e) {
+          console.log('Current track: ' + this.currentTrack);
           this.playing = true;
           var song = e.model.song
           control.song = song;
-          this.currentTrack = e.model.index + 1;
+          this.currentTrack = e.model.index;
           player.src = song.url;
           player.load();
           player.play();
