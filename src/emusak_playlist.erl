@@ -125,7 +125,7 @@ handle_call(playlist, _, State) ->
   Playlist = [
               begin
                 #{<<"url">> => list_to_binary(
-                                  "http://192.168.101.8/transcode/" ++
+                                  "/transcode/" ++
                                     Item#song.type ++
                                     "/" ++ integer_to_list(Item#song.id)),
                   <<"title">> => Item#song.name,

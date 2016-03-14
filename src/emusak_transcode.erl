@@ -23,14 +23,15 @@ init(_, Req0,_) ->
       ok
   end,
   Item = emusak_playlist:get_entry(binary_to_integer(Id)),
+
   Cmd = case Item#song.type of
           "mp3" ->
             "/usr/bin/mpg123 -s -q --no-control -o wav '" ++
-              Item#song.file ++
+              re:replace(Item#song.file,"'","'\\\\''",[{return,list},global]) ++
               "' | /usr/bin/opusenc - - 2>/dev/null";
           "flac" ->
             "/usr/bin/flac -c -d --totally-silent '" ++
-              Item#song.file ++
+               re:replace(Item#song.file,"'","'\\\\''",[{return,list},global]) ++
               "' | /usr/bin/opusenc - - 2>/dev/null"
         end,
   io:format("Launching: /bin/sh -c ~p~n",[Cmd]),
