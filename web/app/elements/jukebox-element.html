@@ -5,235 +5,164 @@
 <link rel="import" href="../bower_components/iron-list/iron-list.html">
 <link rel="import" href="../bower_components/poly-filter/poly-filter.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
+<link rel="import" href="../bower_components/paper-card/paper-card.html">
 
 <!-- jukebox elements -->
 <link rel="import" href="jukebox-control-element.html">
 
 <dom-module id="jukebox-element">
-  <template>
-    <style>
-
-      .item {
-        @apply(--layout-horizontal);
-        cursor: pointer;
-        padding: 16px 22px;
-        border-bottom: 1px solid #DDD;
-      }
-    .item:focus,
-      .item.selected:focus {
-        outline: 0;
-        background-color: #ddd;
-      }
- .item.selected {
-        background-color: var(--google-grey-300);
-        border-bottom: 1px solid #ccc;
-      }
-      iron-list {
-       height: 400px;
-      }
-    </style>
-    <div>
-      <audio src="" id="player"></audio>
-      <iron-ajax
-         id="ajax"
-         url="/playlist"
-         last-response="{{playlist}}"
-         handle-as="json"
-         on-response="initTrack"
-         auto>
-      </iron-ajax>
-      <poly-filter
-         array-to-filter="[[playlist]]"
-         filter="[[filterString]]"
-         filtered-array="{{filteredPlaylist}}">
-      </poly-filter>
-      <jukebox-control-element id="control">
-
-      </jukebox-control-element>
-      <paper-material elevation="1">
-        <div class="item">
-          <iron-label>Search <input is="iron-input" type="string" value="{{filterString::input}}" autofocus></iron-label>
+    <template>
+        <style>
+         .item {
+             @apply(--layout-horizontal);
+             cursor: pointer;
+             padding: 16px 22px;
+             border-bottom: 1px solid #DDD;
+         }
+         .item:focus,
+         .item.selected:focus {
+             outline: 0;
+             background-color: #ddd;
+         }
+         .item.selected {
+             background-color: var(--google-grey-300);
+             border-bottom: 1px solid #ccc;
+         }
+         .iron-selected {
+             background: #eee;
+         }
+         iron-list {
+             height: 400px;
+         }
+        </style>
+        <div style="display: flex; height: 100%;">
+            <div style="width: 50%;">
+                <audio src="" id="player" on-ended="handleEnded"></audio>
+                <iron-ajax
+                    id="ajax"
+                    url="/playlist"
+                    last-response="{{playlist}}"
+                    handle-as="json"
+                    auto>
+                </iron-ajax>
+                <poly-filter
+                    array-to-filter="[[playlist]]"
+                    filter="[[filterString]]"
+                    filtered-array="{{filteredPlaylist}}">
+                </poly-filter>
+                <jukebox-control-element
+                    id="control"
+                    on-next-tap="handleNext"
+                    on-prev-tap="handlePrev"
+                    on-stop-tap="handleStop"
+                    on-play-tap="handlePlay"
+                    on-pause-tap="handlePause">
+                </jukebox-control-element>
+                <paper-material elevation="1">
+                    <div class="item">
+                        <iron-label>Search <input is="iron-input" type="string" value="{{filterString::input}}" autofocus></iron-label>
+                    </div>
+                    <iron-list
+                        items="[[filteredPlaylist]]"
+                        as="song"
+                        id="playlist"
+                        selection-enabled>
+                        <template>
+                            <div
+                                index$="[[index]]"
+                                selected$="[[selected]]"
+                                artist="[[song.artist]]"
+                                title="[[song.title]]"
+                                url="[[song.url]]"
+                                class$="[[_computedClass(selected)]]"
+                                on-tap="_itemSelected">[[song.artist]] - [[song.title]]
+                            </div>
+                        </template>
+                    </iron-list>
+                </paper-material>
+            </div>
+            <div style="width: 50%;">
+                <paper-card heading="Up next"></paper-card>
+                <paper-material elevation="1">
+                    <iron-list
+                        items="[[playNext]]"
+                        as="song"
+                        id="playlistNext">
+                        <template>
+                            <div
+                                index$="[[index]]"
+                                artist="[[song.artist]]"
+                                title="[[song.title]]"
+                                url="[[song.url]]"
+                                class="item">[[song.artist]] - [[song.title]]
+                            </div>
+                        </template>
+                    </iron-list>
+                </paper-material>
+            </div>
         </div>
-        <iron-list
-           items="[[filteredPlaylist]]"
-           as="song"
-           id="playlist"
-           selection-enabled>
-          <template>
-            <div
-               tabindex$="[[tabIndex]]"
-               index$="[[index]]"
-               selected$="[[selected]]"
-               artist="[[song.artist]]"
-               title="[[song.title]]"
-               url="[[song.url]]"
-               class$="[[_computedClass(selected)]]"
-               on-tap="_itemSelected">[[song.artist]] - [[song.title]]</div>
-          </template>
-        </iron-list>
-      </paper-material>
-    </div>
-  </template>
-  <script>
-    (function(win, doc, undefined){
-      Polymer({
-        is: 'jukebox-element',
-        properties: {
-          last: Object,
-          currentTrack: Number,
-          paused: Boolean,
-          playing: Boolean
-        },
-        ready: function() {
-          var that = this,
-          control = this.$.control,
-          player = this.$.player,
-          playlist = this.$.playlist,
-          currentTrack = this.currentTrack;
-          player.addEventListener('ended',function(e){
-            if (this.currentTrack === undefined) {
-              console.log('Current track undefined');
-              if (playlist.items != null) {
-                nextTrack = 0;
-              } else {
-                alert('empty playlist');
-              }
-            } else {
-              console.log('Current track defined');
-              if (this.currentTrack == (playlist.items.length -1)) {
-                console.log('looping');
-                nextTrack = 0;
-              } else {
-                nextTrack = this.currentTrack + 1;
-                console.log('not looping, next track: ' + nextTrack);
-              }
-            }
-            this.currentTrack = nextTrack;
-            player.src = playlist.items[nextTrack].url;
-            control.song = playlist.items[nextTrack];
-            playlist.selectItem(nextTrack);
-            playlist.scrollToIndex(nextTrack);
-            player.load();
-            player.play();
-          });
-          control.addEventListener('play',function (e) {
-            if (this.currentTrack === undefined) {
-              if (playlist.items != null) {
-                this.currentTrack = 0;
-                song = playlist.items[0];
-                player.src = song.url;
-                player.load();
-                player.play();
-                this.playing = true;
-                playlist.selectItem(0);
-                control.song = song;
-              } else {
-                alert('No tracks available');
-              }
-            } else {
-              player.src = playlist.items[this.currentTrack].url;
-              player.load();
-              player.play();
-              this.playing = true;
-            }
-          });
-          control.addEventListener('pause',function (e) {
-            if (this.currentTrack === undefined || this.playing == false) {
-              alert('Not playing!');
-            } else {
-              if (this.paused == true) {
-                player.play();
-                this.paused = false;
-              } else {
-                player.pause();
-                this.paused = true;
-              }
-            }
-          });
-          control.addEventListener('stop',function (e) {
-            if (this.currentTrack === undefined || this.playing == false) {
-              alert('Not playing!');
-            } else {
-              this.playing = false;
-              player.pause();
-              player.currentTime = 0;
-            }
-          });
-          control.addEventListener('next',function (e) {
-            if (this.currentTrack === undefined) {
-              console.log('Current track undefined');
-              if (playlist.items != null) {
-                nextTrack = 0;
-              } else {
-                alert('empty playlist');
-              }
-            } else {
-              console.log('Current track defined');
-              if (this.currentTrack == (playlist.items.length -1)) {
-                console.log('Looping');
-                nextTrack = 0;
-              } else {
-                nextTrack = this.currentTrack + 1;
-                console.log('Next track: ' + nextTrack);
-              }
-            }
-            this.currentTrack = nextTrack;
-            player.src = playlist.items[nextTrack].url;
-            control.song = playlist.items[nextTrack];
-            playlist.selectItem(nextTrack);
-            playlist.scrollToIndex(nextTrack);
-            if (this.playing == true) {
-              player.load();
-              player.play();
-            }
-          });
-          control.addEventListener('prev',function (e) {
-            if (this.currentTrack === undefined) {
-              if (playlist.items != null) {
-                nextTrack = 0;
-              } else {
-                alert('empty playlist');
-              }
-            } else {
-              if (this.currentTrack == 0) {
-                nextTrack = playlist.items.length - 1;
-              } else {
-                nextTrack = this.currentTrack - 1;
-              }
-            }
-            this.currentTrack = nextTrack;
-            player.src = playlist.items[nextTrack].url;
-            control.song = playlist.items[nextTrack];
-            playlist.selectItem(nextTrack);
-            playlist.scrollToIndex(nextTrack);
-            if (this.playing == true) {
-              player.load();
-              player.play();
-            }
-          });
-        },
-        initTrack: function() {
-          console.log('data loaded');
-        },
-        _itemSelected: function(e) {
-          console.log('Current track: ' + this.currentTrack);
-          this.playing = true;
-          var song = e.model.song
-          control.song = song;
-          this.currentTrack = e.model.index;
-          player.src = song.url;
-          player.load();
-          player.play();
-        },
-     _computedClass: function(isSelected) {
-          var classes = 'item';
-          if (isSelected) {
-            classes += ' selected';
-          }
-          return classes;
-        },
+    </template>
+    <script>
+     (function(win, doc, undefined){
+         Polymer({
+             is: 'jukebox-element',
+             properties: {
+                 playNext: {
+                     type: Array,
+                     value: []
+                 }
+             },
+             handlePlay: function(e) {
+                 this.$.player.play();
+             },
+             handleEnded: function(e) {
+                 this.handleNext(e);
+             },
+             handleNext: function (e) {
+                 if (this.playNext[0] !== undefined) {
+                     this.splice('playNext',0,1);
+                 }
+                 if (this.playNext[0] !== undefined) {
+                     console.log('Play deck not empty');
+                     this.$.player.src = this.playNext[0].url;
+                     this.$.control.song = this.playNext[0];
+                     this.$.player.load();
+                     this.$.player.play();
+                 } else {
+                     console.log('Play deck empty');
+                     if (this.$.playlist.items != null) {
+                         var track = Math.floor(Math.random() * this.$.playlist.items.length);
+                         this.$.player.src = this.$.playlist.items[track].url;
+                         this.$.control.song = this.$.playlist.items[track];
+                         this.$.playlist.selectItem(track);
+                         this.$.playlist.scrollToIndex(track);
+                         this.$.player.load();
+                         this.$.player.play();
+                         this.push('playNext',this.$.playlist.items[track]);
+                     } else {
+                         console.log('playlist empty');
+                     }
+                 }
+             },
+             handlePause: function (e) {
+                 if (this.$.player.paused == true) {
+                     this.$.player.play();
+                 } else {
+                     this.$.player.pause();
+                 }
+             },
+             _itemSelected: function(e) {
+                 this.push('playNext',e.model.song);
+             },
+             _computedClass: function(isSelected) {
+                 var classes = 'item';
+                 if (isSelected) {
+                     classes += ' selected';
+                 }
+                 return classes;
+             },
 
-      })
-    })(window, document);
-  </script>
+         })
+     })(window, document);
+    </script>
 </dom-module>

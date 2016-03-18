@@ -8,51 +8,54 @@
 <dom-module id="jukebox-control-element">
   <template>
     <style>
+     paper-button.shuffle[active] {
+         background-color: var(--paper-red-500);
+     }
+     paper-button.play[active] {
+         background-color: var(--paper-red-500);
+     }
+     paper-button.pause[active] {
+         background-color: var(--paper-red-500);
+     }
     </style>
-    <paper-card heading="[[song.artist]]" style="width: 100%; ">
-      <div class="card-content">[[song.title]]</div>
-      <div class="card-actions">
-        <paper-button on-click="handlePrev">
-          <iron-icon icon="av:skip-previous"></iron-icon>
-        </paper-button>
-        <paper-button on-click="handlePlay">
+      <div>
+        <paper-button id="playBtn" on-click="handlePlay" toggles class="play">
           <iron-icon icon="av:play-arrow"></iron-icon>
         </paper-button>
-        <paper-button on-click="handlePause">
+        <paper-button id="pauseBtn" on-click="handlePause" toggles class="pause">
           <iron-icon icon="av:pause"></iron-icon>
         </paper-button>
-        <paper-button on-click="handleStop">
-          <iron-icon icon="av:stop"></iron-icon>
-        </paper-button>
-        <paper-button on-click="handleNext">
+        <paper-button on-tap="handleNext">
           <iron-icon icon="av:skip-next"></iron-icon>
         </paper-button>
       </div>
-    </paper-card>
   </template>
   <script>
-    (function(win, doc, undefined){
-    Polymer({
-    is: 'jukebox-control-element',
-    properties: {
-      song: Object
-    },
-    handlePlay: function(e,d) {
-      this.fire('play');
-    },
-    handleStop: function(e,d) {
-      this.fire('stop');
-    },
-    handlePause: function(e,d) {
-      this.fire('pause');
-    },
-    handlePrev: function(e,d) {
-      this.fire('prev');
-    },
-    handleNext: function(e,d) {
-      this.fire('next');
-    }
+   Polymer({
+       properties: {
+           song: Object,
+           random: Boolean,
+           playing: Boolean
+       },
+       handlePlay: function(e) {
+           if (this.playing !== true) {
+               this.fire('play-tap');
+           }
+           this.playing = true;
+           this.$.playBtn.active = true;
+           this.$.pauseBtn.active = false;
+       },
+       handlePause: function(e) {
+           if (this.playing !== false) {
+               this.fire('pause-tap');
+           }
+           this.playing = false;
+           this.$.playBtn.active = false;
+           this.$.pauseBtn.active = true;
+       },
+       handleNext: function(e) {
+           this.fire('next-tap');
+       }
     });
-    })(window, document);
   </script>
 </dom-module>
