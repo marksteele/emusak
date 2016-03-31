@@ -23,17 +23,9 @@ init(_, Req0,_) ->
       ok
   end,
   Item = emusak_playlist:get_entry(binary_to_integer(Id)),
-
-  Cmd = case Item#song.type of
-          "mp3" ->
-            "/usr/bin/mpg123 -s -q --no-control -o wav '" ++
-              re:replace(Item#song.file,"'","'\\\\''",[{return,list},global]) ++
-              "' | /usr/bin/opusenc - - 2>/dev/null";
-          "flac" ->
-            "/usr/bin/flac -c -d --totally-silent '" ++
-               re:replace(Item#song.file,"'","'\\\\''",[{return,list},global]) ++
-              "' | /usr/bin/opusenc - - 2>/dev/null"
-        end,
+  Cmd = "/usr/bin/ffmpeg -loglevel quiet -i '" ++
+    re:replace(Item#song.file,"'","'\\\\''",[{return,list},global]) ++
+    "' -acodec pcm_s16le -f wav - 2>/dev/null | /usr/bin/opusenc - - 2>/dev/null",
   io:format("Launching: /bin/sh -c ~p~n",[Cmd]),
   _Port = erlang:open_port(
             {spawn_executable,"/bin/sh"},

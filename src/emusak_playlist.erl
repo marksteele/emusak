@@ -90,7 +90,7 @@ init([]) ->
    ),
   {Songs,Artists} = filelib:fold_files(
             Dir,
-            "(mp3|flac)\$",
+            "(mp3|flac|m4a|MP3|FLAC|M4A|mp2|MP2|ogg|OGG|wma|WMA|ape|APE)\$",
             true,
             fun(F,{CountAcc,ArtistsAcc}) ->
                 FileParts = filename:split(F),
