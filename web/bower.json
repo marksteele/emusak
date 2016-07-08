@@ -14,10 +14,15 @@
     "iron-icons": "PolymerElements/iron-icons#^1.1.3",
     "iron-label": "PolymerElements/iron-label#^1.0.2",
     "iron-input": "PolymerElements/iron-input#^1.0.8",
-    "paper-button": "PolymerElements/paper-button#^1.0.11"
+    "paper-button": "PolymerElements/paper-button#^1.0.11",
+    "iron-localstorage": "^1.0.5",
+    "iron-form": "^1.0.16"
   },
   "devDependencies": {
     "web-component-tester": "^4.0.0"
   },
-  "ignore": []
+  "ignore": [],
+  "resolutions": {
+    "polymer": "master"
+  }
 }

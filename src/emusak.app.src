@@ -7,8 +7,12 @@
         kernel,
         stdlib,
         cowboy,
-        jiffy
+        jiffy,
+        ejwt
     ]},
     {mod, {emusak_app, []}},
-    {env, []}
+    {env, [
+           {key, <<"shhh">>},
+           {password,<<"letmein">>}
+          ]}
 ]}.

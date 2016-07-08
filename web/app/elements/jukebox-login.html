@@ -1,0 +1,51 @@
+<link rel="import" href="../bower_components/iron-form/iron-form.html">
+<dom-module id="jukebox-login">
+    <template>
+        <style>
+         .error-message {
+             color: #DB4437;
+         }
+        </style>
+        <span class="error-message" hidden="[[!errorMessage]]">[[errorMessage]]</span>
+        <form is="iron-form" id="form" method="post" action="/auth">
+            <input type=password name="secret">
+            <button on-tap="_logIn">Login</button>
+        </form>
+    </template>
+    <script>
+     Polymer({
+         is: 'jukebox-login',
+
+         properties: {
+             secret: String,
+             errorMessage: String,
+             token: {
+                 type: String,
+                 notify: true
+             }
+         },
+
+         listeners: {
+             'iron-form-response': '_handleLoginSuccess',
+             'iron-form-error': '_handleLoginError'
+         },
+
+         observers: ['_errorClearer(secret)'],
+         _errorClearer: function() {
+             this.errorMessage = '';
+         },
+
+         _logIn: function() {
+             this.$.form.submit();
+         },
+
+         _handleLoginSuccess: function(evt) {
+             this.token =  evt.detail.xhr.getResponseHeader('x-auth-token');
+         },
+
+         _handleLoginError: function() {
+             this.errorMessage = 'You are doing it wrong.'
+         }
+     });
+    </script>
+</dom-module>

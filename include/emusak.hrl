@@ -1,2 +1,2 @@
 
--record(song,{id,artist,type,name,file}).
+-record(song,{id,artist,type,name,file,size}).

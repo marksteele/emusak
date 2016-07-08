@@ -9,18 +9,18 @@
          }).
 
 init(_, Req, _Opts) ->
-  {ok, Req, #state{}}.
+    {ok, Req, #state{}}.
 
 handle(Req, State=#state{}) ->
-  {ok, Json} = emusak_playlist:playlist(),
-  {ok, Req2} = cowboy_req:reply(
-                 200,
-                 [
-                  {<<"content-type">>, <<"application/json">>}
-                 ],
-                 Json,
-                 Req),
-  {ok, Req2, State}.
+    {ok, Json} = emusak_playlist:playlist(),
+    {ok, Req2} = cowboy_req:reply(
+                   200,
+                   [
+                    {<<"content-type">>, <<"application/json">>}
+                   ],
+                   Json,
+                   Req),
+    {ok, Req2, State}.
 
 terminate(_Reason, _Req, _State) ->
-  ok.
+    ok.

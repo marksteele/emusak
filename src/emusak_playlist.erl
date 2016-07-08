@@ -93,12 +93,13 @@ init([]) ->
             "(mp3|flac|m4a|MP3|FLAC|M4A|mp2|MP2|ogg|OGG|wma|WMA|ape|APE)\$",
             true,
             fun(F,{CountAcc,ArtistsAcc}) ->
+                FileSize = filelib:file_size(F),
                 FileParts = filename:split(F),
                 FileName = filename:basename(lists:last(FileParts)),
                 SongTitle = filename:rootname(FileName),
                 Artist = lists:nth(4,FileParts),
                 FileType = string:substr(filename:extension(F),2),
-                ets:insert(playlist,#song{id=CountAcc,artist=list_to_binary(Artist),type=FileType,name=list_to_binary(SongTitle),file=F}),
+                ets:insert(playlist,#song{id=CountAcc,artist=list_to_binary(Artist),type=FileType,name=list_to_binary(SongTitle),file=F,size=FileSize}),
                 {CountAcc + 1,sets:add_element(Artist,ArtistsAcc)}
             end,
             {1,sets:new()}

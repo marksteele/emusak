@@ -6,9 +6,11 @@
 <link rel="import" href="../bower_components/poly-filter/poly-filter.html">
 <link rel="import" href="../bower_components/paper-material/paper-material.html">
 <link rel="import" href="../bower_components/paper-card/paper-card.html">
+<link rel="import" href="../bower_components/iron-localstorage/iron-localstorage.html">
 
 <!-- jukebox elements -->
 <link rel="import" href="jukebox-control-element.html">
+<link rel="import" href="jukebox-login.html">
 
 <dom-module id="jukebox-element">
     <template>
@@ -16,8 +18,9 @@
          .item {
              @apply(--layout-horizontal);
              cursor: pointer;
-             padding: 16px 22px;
+             padding: 10px 15px;
              border-bottom: 1px solid #DDD;
+             font-size: 0.875em;
          }
          .item:focus,
          .item.selected:focus {
@@ -35,15 +38,19 @@
              height: 400px;
          }
         </style>
+        <jukebox-login token="{{token}}" hidden$="{{token}}"></jukebox-login>
+        <iron-localstorage name="token" value="{{token}}"></iron-localstorage>
+
         <div style="display: flex; height: 100%;">
             <div style="width: 50%;">
-                <audio src="" id="player" on-ended="handleEnded"></audio>
+                <audio src="" id="player" on-ended="handleEnded" on-abort="handledEnded" on-error="handleEnded"></audio>
                 <iron-ajax
                     id="ajax"
                     url="/playlist"
                     last-response="{{playlist}}"
                     handle-as="json"
-                    auto>
+                    headers$='{"Authorization" :"Bearer {{token}}"}'
+                    auto="{{token}}">
                 </iron-ajax>
                 <poly-filter
                     array-to-filter="[[playlist]]"
@@ -93,7 +100,7 @@
                                 index$="[[index]]"
                                 artist="[[song.artist]]"
                                 title="[[song.title]]"
-                                url="[[song.url]]"
+                                url="[[song.url]]?auth={{token}}"
                                 class="item">[[song.artist]] - [[song.title]]
                             </div>
                         </template>
@@ -107,12 +114,24 @@
          Polymer({
              is: 'jukebox-element',
              properties: {
+                 token: {
+                     type: String,
+                     notify: true,
+                     value: ''
+                 },
                  playNext: {
                      type: Array,
                      value: []
                  }
              },
+             listeners: {
+                 'logout': '_logout'
+             },
+             _logout: function() {
+                 this.token = '';
+             },
              handlePlay: function(e) {
+                 this.$.player.load();
                  this.$.player.play();
              },
              handleEnded: function(e) {
@@ -124,7 +143,7 @@
                  }
                  if (this.playNext[0] !== undefined) {
                      console.log('Play deck not empty');
-                     this.$.player.src = this.playNext[0].url;
+                     this.$.player.src = this.playNext[0].url + '?auth='+this.token;
                      this.$.control.song = this.playNext[0];
                      this.$.player.load();
                      this.$.player.play();
@@ -132,7 +151,7 @@
                      console.log('Play deck empty');
                      if (this.$.playlist.items != null) {
                          var track = Math.floor(Math.random() * this.$.playlist.items.length);
-                         this.$.player.src = this.$.playlist.items[track].url;
+                         this.$.player.src = this.$.playlist.items[track].url +'?auth='+this.token;
                          this.$.control.song = this.$.playlist.items[track];
                          this.$.playlist.selectItem(track);
                          this.$.playlist.scrollToIndex(track);
@@ -161,7 +180,6 @@
                  }
                  return classes;
              },
-
          })
      })(window, document);
     </script>

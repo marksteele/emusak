@@ -9,6 +9,7 @@ start(_Type, _Args) ->
   Dispatch = cowboy_router:compile([
                                     {'_', [
                                            {"/playlist",emusak_handler,[]},
+                                           {"/auth",emusak_auth,[]},
                                            {"/transcode/[:type]/[:id]",emusak_transcode,[]},
                                            {"/",cowboy_static,{file,Dir ++ "/index.html"}},
                                            {"/[...]",cowboy_static, {dir,Dir}}
@@ -20,8 +21,10 @@ start(_Type, _Args) ->
               100,
               [{port, 80}],
               [
-               {env, [{dispatch, Dispatch}]}
-              ]),
+                {env,[{dispatch,Dispatch}]},
+                {middlewares,[cowboy_router, emusak_auth_middleware,cowboy_handler]}
+              ]
+              ),
   {ok,_} = emusak_playlist_sup:start_link(),
   emusak_sup:start_link().
 
